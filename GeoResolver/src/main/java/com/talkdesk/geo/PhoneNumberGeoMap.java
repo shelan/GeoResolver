@@ -48,9 +48,9 @@ public class PhoneNumberGeoMap {
 
         if (list.contains("--same-country-only")) {
             list.remove("--same-country-only");
-            infoTable = resolver.buildInfoTable(list, false);
-        } else {
             infoTable = resolver.buildInfoTable(list, true);
+        } else {
+            infoTable = resolver.buildInfoTable(list, false);
         }
 
         String phoneNumber = resolver.getClosestNumber(infoTable);

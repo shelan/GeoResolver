@@ -132,7 +132,6 @@ public class GeoCodeResolver {
         String firstNoTown = null;
         String firstNoCountryCode;
 
-
         if (information.length == 2) {
             firstNoCountryCode = firstNotownDesc.split(":")[0];
             firstNoTown = firstNotownDesc.split(":")[1];
