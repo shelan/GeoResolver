@@ -6,6 +6,20 @@
  
 2) Configuration and Quick Start
 
+Resources:
+
+https://s3.amazonaws.com/geodata.storage/Table.sql
+
+https://s3.amazonaws.com/geodata.storage/country.csv
+
+(File containing data for populating database size around 1.1 GB)
+https://s3.amazonaws.com/geodata.storage/geodata.tsv
+
+(mysql database dump. If you restore this to your mysql database, you can skip populating initial databse. Still you need to place geo.properties file inside your conf folder with database details for subsequent access)
+https://s3.amazonaws.com/geodata.storage/geodeocde.sql
+
+	
+
 Place **conf ** folder as the same highlevel hierarchy as the jar and following is a sample property file (geo.properties)
 
     #username for database
