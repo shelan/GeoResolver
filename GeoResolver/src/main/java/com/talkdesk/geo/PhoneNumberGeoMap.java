@@ -33,20 +33,39 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.Locale;
 
 public class PhoneNumberGeoMap {
 
     private static Console console = System.console();
     private static Log log = LogFactory.getLog(PhoneNumberGeoMap.class);
 
-    public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException, GeoResolverException {
+    /**
+     * @param args
+     * @throws IOException
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     * @throws GeoResolverException
+     */
+    public static void main(String[] args) throws GeoResolverException {
         // create Options object
         DBConnector connector = new DBConnector();
         GeoCodeResolver resolver = new GeoCodeResolver(connector.getDefaultDBconnection());
         ArrayList list = new ArrayList(Arrays.asList(args));
         Hashtable<String, Double> infoTable = new Hashtable<String, Double>();
 
-        if (list.contains("--same-country-only")) {
+        if (list.contains("--populate-data")) {
+            GeoCodeRepositoryBuilder repositoryBuilder = new GeoCodeRepositoryBuilder();
+            if (list.contains("--country"))
+                repositoryBuilder.populateCountryData();
+            else if (list.contains("--geo"))
+                repositoryBuilder.populateGeoData();
+            else {
+                repositoryBuilder.populateCountryData();
+                repositoryBuilder.populateGeoData();
+            }
+
+        } else if (list.contains("--same-country-only")) {
             list.remove("--same-country-only");
             infoTable = resolver.buildInfoTable(list, true);
         } else {
@@ -55,7 +74,15 @@ public class PhoneNumberGeoMap {
 
         String phoneNumber = resolver.getClosestNumber(infoTable);
 
-        System.out.println(phoneNumber);
+        if (phoneNumber != null) {
+            System.out.println("-----------------------");
+            System.out.println(phoneNumber);
+            Locale locale = new Locale("en", phoneNumber.split(":")[0]);
+            System.out.println(locale.getDisplayCountry());
+        } else {
+            System.out.println("-----------------------");
+            System.out.println("No Result ..!!!");
+        }
 
     }
 }

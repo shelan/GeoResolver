@@ -68,6 +68,13 @@ public class GeoCodeResolver {
             return country;
     }
 
+    /**
+     * Get location information
+     * @param townName
+     * @param countryCode
+     * @return
+     * @throws GeoResolverException
+     */
     public GeoInfo getLocationInfo(String townName, String countryCode) throws GeoResolverException {
         String query;
         PreparedStatement statement;
@@ -109,6 +116,13 @@ public class GeoCodeResolver {
         return geoInfo;
     }
 
+    /**
+     * Calculate distance between two lat/long points
+     * @param firstTown
+     * @param secondTown
+     * @return
+     * @throws GeoResolverException
+     */
     public double calculateDistance(GeoInfo firstTown, GeoInfo secondTown) throws GeoResolverException {
         if (firstTown == null || secondTown == null) {
             log.error("Town information cannot be determined");
@@ -120,6 +134,13 @@ public class GeoCodeResolver {
         return LatLngTool.distance(point1, point2, LengthUnit.KILOMETER);
     }
 
+    /**
+     * Build the distance table from lang and lat
+     * @param phoneNumberList
+     * @param countryFilteringEnabled
+     * @return
+     * @throws GeoResolverException
+     */
     public Hashtable<String, Double> buildInfoTable(ArrayList<String> phoneNumberList, boolean countryFilteringEnabled)
             throws GeoResolverException {
         Hashtable infoTable = new Hashtable();
@@ -169,6 +190,12 @@ public class GeoCodeResolver {
         return infoTable;
     }
 
+    /**
+     * Get the minimum distance
+     * @param numberList
+     * @return
+     * @throws GeoResolverException
+     */
     public String getClosestNumber(Hashtable<String, Double> numberList) throws GeoResolverException {
         String closest = "";
         Double lowestDistance = Double.MAX_VALUE;
@@ -180,7 +207,6 @@ public class GeoCodeResolver {
                 closest = key;
             }
         }
-
         return !closest.isEmpty() ? getTownFromNumber(closest) + " - " + closest : null;
     }
 

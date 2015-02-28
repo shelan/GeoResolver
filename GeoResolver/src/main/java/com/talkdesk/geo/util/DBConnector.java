@@ -20,6 +20,8 @@ package com.talkdesk.geo.util;/*
  * THE SOFTWARE.
  */
 
+import com.talkdesk.geo.Exception.GeoResolverException;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,44 +38,72 @@ public class DBConnector {
     private Connection connection;
     private String driver;
 
-    public DBConnector() throws IOException {
+    public DBConnector() throws GeoResolverException {
         init();
     }
 
-    private void init() throws IOException {
+    private void init() throws GeoResolverException {
         Properties properties = new Properties();
 
         FileInputStream fileInputStream;
 
-        File file = new File("./conf/db.properties");
+        File file = new File("./conf/geo.properties");
 
         //if database configuration is not present in conf fallback to default.
-        if (file.exists()) {
-            fileInputStream = new FileInputStream("./conf/db.properties");
-        } else {
-            ClassLoader classLoader = getClass().getClassLoader();
-            fileInputStream = new FileInputStream(classLoader.getResource("db.properties").getFile());
+        try {
+            if (file.exists()) {
+                fileInputStream = new FileInputStream("./conf/geo.properties");
+            } else {
+                ClassLoader classLoader = getClass().getClassLoader();
+                fileInputStream = new FileInputStream(classLoader.getResource("geo.properties").getFile());
 
+            }
+            properties.load(fileInputStream);
+
+            username = properties.getProperty("username");
+            password = properties.getProperty("password");
+            driver = properties.getProperty("driver");
+            url = properties.getProperty("url");
+
+            fileInputStream.close();
+        } catch (IOException e) {
+            throw new GeoResolverException("Error while loading property files ", e);
         }
-        properties.load(fileInputStream);
-        username = properties.getProperty("username");
-        password = properties.getProperty("password");
-        driver = properties.getProperty("driver");
-        url = properties.getProperty("url");
-
-        fileInputStream.close();
     }
 
+    /**
+     * Get Database connection for reuse
+     *
+     * @param dbUrl
+     * @param username
+     * @param password
+     * @return
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public Connection getDBConnection(String dbUrl, String username, String password) throws
-            ClassNotFoundException, SQLException {
-        Class.forName(driver);
-        if (connection == null)
-            connection = DriverManager.
-                    getConnection(dbUrl, username, password);
+            GeoResolverException {
+        try {
+            Class.forName(driver);
+            if (connection == null)
+                connection = DriverManager.
+                        getConnection(dbUrl, username, password);
+        } catch (ClassNotFoundException e) {
+            throw new GeoResolverException("Could not load driver class", e);
+        } catch (SQLException e) {
+            throw new GeoResolverException("Error while obtaining the connection", e);
+        }
         return connection;
     }
 
-    public Connection getDefaultDBconnection() throws SQLException, ClassNotFoundException {
+    /**
+     * Get the connection for default parameters present in geo.properties
+     *
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public Connection getDefaultDBconnection() throws GeoResolverException {
         if (url == null || url.isEmpty()) {
             System.out.println("URL need to be valid and cannot be empty");
             return null;

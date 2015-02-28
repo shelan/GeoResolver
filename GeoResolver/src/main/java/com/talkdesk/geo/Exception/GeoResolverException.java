@@ -24,10 +24,19 @@ package com.talkdesk.geo.Exception;
 
 public class GeoResolverException extends Exception {
 
+    /**
+     *
+     * @param msg
+     */
     public GeoResolverException(String msg) {
         super(msg);
     }
 
+    /**
+     *
+     * @param msg
+     * @param throwable
+     */
     public GeoResolverException(String msg, Throwable throwable) {
         super(msg, throwable);
     }

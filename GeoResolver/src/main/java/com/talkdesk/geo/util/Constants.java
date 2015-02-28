@@ -23,5 +23,8 @@
 package com.talkdesk.geo.util;
 
 public class Constants {
+    /**
+     * Default country for phone geocode
+     */
     public static final String DEFAULT_COUNTRY = "US";
 }

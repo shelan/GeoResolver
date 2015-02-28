@@ -26,8 +26,7 @@ import com.talkdesk.geo.util.DBConnector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -35,14 +34,23 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class GeoCodeRepositoryBuilder {
 
     public static final Log log = LogFactory.getLog(GeoCodeRepositoryBuilder.class);
     Connection connection;
 
-    private Connection connectToDatabase() throws
-            ClassNotFoundException, SQLException, IOException {
+    private String geocodeDataLocation = "data/geocode.tsv";
+    private String countryDataLocation = "data/country.csv";
+
+    public GeoCodeRepositoryBuilder() throws GeoResolverException {
+        connectToDatabase();
+        loadDataFileLocations();
+
+    }
+
+    private Connection connectToDatabase() throws GeoResolverException {
         DBConnector connector = new DBConnector();
         Connection connection = connector.getDefaultDBconnection();
         if (log.isDebugEnabled())
@@ -51,6 +59,7 @@ public class GeoCodeRepositoryBuilder {
     }
 
     /**
+     * Format of the file loading data from
      * geonameid         : integer id of record in geonames database
      * name              : name of geographical point (utf8) varchar(200)
      * asciiname         : name of geographical point in plain ascii characters, varchar(200)
@@ -71,16 +80,19 @@ public class GeoCodeRepositoryBuilder {
      * timezone          : the timezone id (see file timeZone.txt) varchar(40)
      * modification date : date of last modification in yyyy-MM-dd format
      *
-     * @param inputFile
      * @throws IOException
      */
-    private void populateData(String inputFile) throws GeoResolverException {
+    public void populateGeoData() throws GeoResolverException {
 
         try {
             if (connection == null)
                 connection = connectToDatabase();
+            if (!new File(geocodeDataLocation).exists()) {
+                log.error("No Data file found for geoData. please add to data/geodata.tsv ");
+                return;
+            }
 
-            Path file = FileSystems.getDefault().getPath(inputFile);
+            Path file = FileSystems.getDefault().getPath(geocodeDataLocation);
             Charset charset = Charset.forName("UTF-8");
             BufferedReader inputStream = Files.newBufferedReader(file, charset);
             String buffer;
@@ -101,8 +113,6 @@ public class GeoCodeRepositoryBuilder {
             }
         } catch (SQLException e) {
             throw new GeoResolverException("Error while executing SQL query", e);
-        } catch (ClassNotFoundException e) {
-            throw new GeoResolverException("Class not found for driver", e);
         } catch (IOException e) {
             throw new GeoResolverException("Error while accessing input file", e);
         }
@@ -110,12 +120,22 @@ public class GeoCodeRepositoryBuilder {
         //should close all the connections for memory leaks.
     }
 
-    public void populateCountryData(String inputFile) throws GeoResolverException {
+    /**
+     * Populate country data for the table ISO and lang / lat mapping
+     *
+     * @throws GeoResolverException
+     */
+    public void populateCountryData() throws GeoResolverException {
         try {
             if (connection == null)
                 connection = connectToDatabase();
 
-            Path file = FileSystems.getDefault().getPath(inputFile);
+            if (!new File(countryDataLocation).exists()) {
+                log.error("No Data file found for countryData. please add to data/country.csv ");
+                return;
+            }
+
+            Path file = FileSystems.getDefault().getPath(countryDataLocation);
             Charset charset = Charset.forName("UTF-8");
             BufferedReader inputStream = Files.newBufferedReader(file, charset);
             String buffer;
@@ -137,19 +157,31 @@ public class GeoCodeRepositoryBuilder {
             throw new GeoResolverException("Error while executing SQL query", e);
         } catch (IOException e) {
             throw new GeoResolverException("Error while accessing input file", e);
-        } catch (ClassNotFoundException e) {
-            throw new GeoResolverException("Class not found for driver", e);
         }
 
-        log.info("Finished populating Database.");
+        log.info("Finished populating Database for country data.");
         //should close all the connections for memory leaks.
     }
 
+    private void loadDataFileLocations() {
+        FileInputStream fileInputStream;
 
-    public static void main(String[] args) throws GeoResolverException {
-        GeoCodeRepositoryBuilder geoCodeRepositoryBuilder = new GeoCodeRepositoryBuilder();
-      //  geoCodeRepositoryBuilder.populateData("/Users/shelan/projects/talkdesk/allCountries.txt");
-        geoCodeRepositoryBuilder.populateCountryData("/Users/shelan/Downloads/country-lat-lang.csv");
+        File file = new File("./conf/geo.properties");
+        try {
+            if (file.exists()) {
+                fileInputStream = new FileInputStream("./conf/geo.properties");
+            } else {
+                ClassLoader classLoader = getClass().getClassLoader();
+                fileInputStream = new FileInputStream(classLoader.getResource("geo.properties").getFile());
+            }
+            Properties properties = new Properties();
+            properties.load(fileInputStream);
+            geocodeDataLocation = properties.getProperty("geoDataPath");
+            countryDataLocation = properties.getProperty("countryDataPath");
+
+        } catch (Exception e) {
+            log.info("geo.properties not found using default property file ," + e.getMessage());
+        }
     }
 
 }
